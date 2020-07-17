@@ -66,7 +66,7 @@ class MyFrame(wx.Frame):
         self.st.SetLabel(self.tree.GetItemText(item))
 
     def CreateTreeCtrl(self, parent):
-        tree = wx.TreeCtrl(parent)
+        tree = wx.TreeCtrl(parent,style=wx.TR_HIDE_ROOT)
         # 通过wx.ImageList()创建一个图像列表imglist并保存在树中
         imglist = wx.ImageList(16, 16, True, 2)
         imglist.Add(wx.ArtProvider.GetBitmap(wx.ART_FOLDER, size=wx.Size(16, 16)))
@@ -79,15 +79,17 @@ class MyFrame(wx.Frame):
         item3 = tree.AppendItem(root, 'Item3', 0)
         item4 = tree.AppendItem(root, 'Item4', 0)
         item5 = tree.AppendItem(root, 'Item5', 0)
-        tree.Expand(root)
-        tree.SelectItem(root)
+        tree.SetItemTextColour(item5,wx.RED)
+        # tree.Expand(root)
+        # tree.SelectItem(root)
 
         # 给item1节点添加5个子节点并展开
         tree.AppendItem(item1, 'file 1', 1)
         tree.AppendItem(item1, 'file 2', 1)
         tree.AppendItem(item1, 'file 3', 1)
         tree.AppendItem(item1, 'file 4', 1)
-        tree.AppendItem(item1, 'file 5', 1)
+        ele = tree.AppendItem(item1, 'file 5', 1)
+        tree.SetItemTextColour(ele,wx.RED)
         # tree.Expand(item1)
 
         # 给item2节点添加5个子节点并展开
