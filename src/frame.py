@@ -1,21 +1,25 @@
+import os
+
 import wx
 import wx.grid as gridlib
 from wxspreadsheet import Spreadsheet
 from files_tree import FilesTree
 from files import FileHandler
 
+
 class XPanel(wx.Panel):
     """"""
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def __init__(self, parent):
         """Constructor"""
         wx.Panel.__init__(self, parent=parent)
         self.parent = parent
 
+
 class WinUI(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title="Tree", size=(800, 600))
+        super().__init__(parent=None, title="电表识别 0.2", size=(800, 600))
         self.Center()
         # 设置菜单栏
         self.SetMenuBar(self.init_Menu())
@@ -31,11 +35,11 @@ class WinUI(wx.Frame):
         self.file_helper = FileHandler()
         self.tree = self.CreateTreeCtrl(left)
         self.table = Spreadsheet(right)
-       
+
         self.Bind(wx.EVT_TREE_SEL_CHANGING, self.on_click, self.tree)
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.show_img, self.tree)
         self.Bind(gridlib.EVT_GRID_CELL_CHANGED, self.change_cell, self.table)
-        self.Bind(gridlib.EVT_GRID_CELL_CHANGED, self.change_cell, self.table)
+        self.Bind(gridlib.EVT_GRID_CELL_CHANGING, self.resizer, self.table)
 
         # 为left面板设置一个布局管理器
         vbox1 = wx.BoxSizer(wx.VERTICAL)
@@ -46,8 +50,8 @@ class WinUI(wx.Frame):
         right.SetSizer((vbox2))
 
         vbox1.Add(self.tree, 1, flag=wx.EXPAND | wx.ALL, border=5)
-        vbox2.Add(self.table, 1, flag=wx.EXPAND | wx.ALL)
-
+        vbox2.Add(self.table, 1, flag=wx.EXPAND, border=5)
+        self.vbox2 = vbox2
         vbox2.Fit(self.table)
         vbox1.Fit(self.tree)
 
@@ -61,6 +65,11 @@ class WinUI(wx.Frame):
             item_data["data"] = data
             self.tree.setData2Item(self.mid_item, item_data)
             self.mid_item = None
+            self.vbox2.Fit(self.table)
+
+    def resizer(self, event):
+        self.table.AutoSize()
+        self.vbox2.Fit(self.table)
 
     def show_img(self, event):
         """ 双击打开图片
@@ -69,7 +78,7 @@ class WinUI(wx.Frame):
         data = self.tree.getItemData(item)
         if data:
             file_path = data['file_path']
-            print(self.tree.GetItemText(item), "double clicked {}".format(file_path))
+            self.file_helper.show_img(file_path)
 
     def init_Menu(self):
         menuBar = wx.MenuBar()
@@ -84,13 +93,12 @@ class WinUI(wx.Frame):
         menuBar.Append(s1, "&文件")
         exportItem = s2.Append(-1, "导出到...")
         menuBar.Append(s2, "&导出")
-        
 
         self.Bind(wx.EVT_MENU, self.OnCloseMe, exitItem)
         self.Bind(wx.EVT_MENU, self.onOpenFile, fileItem)
         self.Bind(wx.EVT_MENU, self.onOpenDirectory, fileDirItem)
         self.Bind(wx.EVT_MENU, self.exportData, exportItem)
-        
+
         return menuBar
 
     def exportData(self, event):
@@ -106,14 +114,27 @@ class WinUI(wx.Frame):
         path = dialog.GetPath()
         all_items = self.tree.getAllCodes()
         print(all_items)
-        # with open("数据导出.csv", 'w') as f:
-    
+        try:
+            self.write(all_items, path)
+        except Exception as e:
+            print(e)
+        else:
+            os.startfile(path)
+
+    def write(self, items, path):
+        with open(os.path.join(path, "数据导出.csv"), 'w') as f:
+            for i in items:
+                if not i:continue
+                f.write(str(i)+'\t,\n')
+
+
+
     def on_click(self, event):
         item = event.GetItem()
         # 更新数据 展示
         data = self.tree.getItemData(item)
         if not data:
-            data = {'data':[['']]}
+            data = {'data': [['']]}
             self.table.setReadOnly()
             self.mid_item = None
         else:
@@ -121,7 +142,6 @@ class WinUI(wx.Frame):
             self.mid_item = item
         table_data = data['data']
         self.table.ShowData(table_data)
-
 
     def CreateTreeCtrl(self, parent):
         tree = FilesTree(parent)

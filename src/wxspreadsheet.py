@@ -16,26 +16,26 @@ class ContextMenu(wx.Menu):
         wx.Menu.__init__(self)
         self.parent = parent       
         insertrow = wx.MenuItem(self, wx.NewId(), '添加行')
-        self.AppendItem(insertrow)
+        self.Append(insertrow)
         self.Bind(wx.EVT_MENU, self.OnInsertRow, id=insertrow.GetId())
         deleterow = wx.MenuItem(self, wx.NewId(), '删除行')
-        self.AppendItem(deleterow)
+        self.Append(deleterow)
         self.Bind(wx.EVT_MENU, self.OnDeleteRow, id=deleterow.GetId())
         insertcol = wx.MenuItem(self, wx.NewId(), '添加列')
-        self.AppendItem(insertcol)
+        self.Append(insertcol)
         self.Bind(wx.EVT_MENU, self.OnInsertCol, id=insertcol.GetId())
         deletecol = wx.MenuItem(self, wx.NewId(), '删除列')
-        self.AppendItem(deletecol)
+        self.Append(deletecol)
         self.Bind(wx.EVT_MENU, self.OnDeleteCol, id=deletecol.GetId())
         self.AppendSeparator()
         copy = wx.MenuItem(self, wx.NewId(), 'Copy')
-        self.AppendItem(copy)
+        self.Append(copy)
         self.Bind(wx.EVT_MENU, self.OnCopy, id=copy.GetId())
         paste = wx.MenuItem(self, wx.NewId(), 'Paste')
-        self.AppendItem(paste)
+        self.Append(paste)
         self.Bind(wx.EVT_MENU, self.OnPaste, id=paste.GetId())
         clear = wx.MenuItem(self, wx.NewId(), '清空')
-        self.AppendItem(clear)
+        self.Append(clear)
         self.Bind(wx.EVT_MENU, self.OnClear, id=clear.GetId())
 
     def on_action(self):
@@ -47,33 +47,43 @@ class ContextMenu(wx.Menu):
             dat['data'] = data
             window.tree.setData2Item(item, dat)
 
+    def fitWindow(self):
+        window = self.parent.parent.parent.parent
+        window.vbox2.Fit(window.table)
+
     def OnInsertRow(self, event):
         '''Basic "Insert Row(s) Here" function'''
         self.parent.SelectRow(self._getRow())
         self.parent.InsertRows(self._getRow(), self._getSelectionRowSize())
+        self.fitWindow()
         self.on_action()
-        
+
     def OnDeleteRow(self, event):
         '''Basic "Delete Row(s)" function'''
         self.parent.SelectRow(self._getRow())
         self.parent.DeleteRows(self._getRow(), self._getSelectionRowSize())
+        self.fitWindow()
         self.on_action()
         
     def OnInsertCol(self, event):
         '''Basic "Insert Column(s) Here" function'''
         self.parent.SelectCol(self._getCol())
         self.parent.InsertCols(self._getCol(), self._getSelectionColSize())
+        self.fitWindow()
         self.on_action()
         
     def OnDeleteCol(self, event):
         '''Basic "Delete Column(s)" function'''
         self.parent.SelectCol(self._getCol())
         self.parent.DeleteCols(self._getCol(), self._getSelectionColSize())
+        self.fitWindow()
         self.on_action()
-        
+
     def OnClear(self, event):
         '''Erases the contents of the currently selected cell(s).'''
-        self.parent.Clear()
+        self.parent.ClearGrid()
+        self.fitWindow()
+        self.on_action()
 
     def OnCopy(self, event):
         '''Copies the contents of the currently selected cell(s)
@@ -216,7 +226,8 @@ class Spreadsheet(wx.grid.Grid):
         self.ClearGrid()
 
         try:
-            self.ResetNumberRowsCols()
+            if data:
+                self.ResetNumberRowsCols()
 
             rownum = 0
             max_cols = 0

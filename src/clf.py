@@ -1,13 +1,11 @@
 
 import cv2
 import numpy as np
-import os
 from collections import defaultdict
 import math
 from pyzbar import pyzbar
 
 
-classes = ["code"]
 modelConfiguration = "power-tiny.cfg"
 modelWeights = "power-tiny_20000.weights"
 rd = lambda x: round(math.log(x))
@@ -15,21 +13,21 @@ rd = lambda x: round(math.log(x))
 
 class Parser:
     def __init__(self):
-        net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
-        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
-        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
-        self.net = net
+        self.net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
+        self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+        self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+
         # 缩放后的图像大小
         self.new_size = (416, 416)
-        self.scale = 0.00294
+        self.scale = 0.0054154
 
     def make_blob_from_file(self, image):
         image = cv2.resize(image, self.new_size)
-        blob = cv2.dnn.blobFromImage(image, self.scale, self.new_size, (0, 0, 0), True, crop=False)
+        blob = cv2.dnn.blobFromImage(image, self.scale, self.new_size, [0,0,0], 1, crop=False)
         return blob
 
     def make_blob_from_files(self, images):
-        blob = cv2.dnn.blobFromImages(images, self.scale, self.new_size, (0, 0, 0), True, crop=False)
+        blob = cv2.dnn.blobFromImages(images, self.scale, self.new_size, [0,0,0], 1, crop=False)
         return blob
 
     def extract(self, image_path):
@@ -116,11 +114,15 @@ class Parser:
 
     @staticmethod
     def extract_barcode(img):
+        from uuid import uuid4
+        uid = str(uuid4())
         barcodes = pyzbar.decode(img)
         result = []
+        cv2.imwrite(uid+'.jpg', img)
+
         for barcode in barcodes:
             code = barcode.data.decode('utf-8')
-            result.append(code)
+            result.append(str(code))
         return ",".join(result)
 
     def get_data_array(self, img_path):
@@ -133,5 +135,7 @@ class Parser:
 
     @staticmethod
     def show_img(img_path):
-        img = cv2.imread(img_path)
-        cv2.imshow('预览', img)
+        cv2.namedWindow("output", cv2.WINDOW_NORMAL)        # Create window with freedom of dimensions
+        im = cv2.imread(img_path)                        # Read image
+        # imS = cv2.resize(im, (960, 540))                    # Resize image
+        cv2.imshow("output", im)
